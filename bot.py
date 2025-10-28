@@ -11,7 +11,6 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import logging
 from datetime import datetime, timedelta
 import asyncio
-import os
 
 # Настройка логирования
 logging.basicConfig(
@@ -21,15 +20,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Токен бота (замените на реальный токен)
-TOKEN = "7080432982:AAEgzJx0Ac3wywbUc1uNpKR6-3HTjePOTZY"
+TOKEN = "8422360803:AAG44u_upD1NCaxOdRR9rfy648xYgdeNsdo"
 
 # ID администратора
 ADMIN_ID = 844012884
-
-# Пути к изображениям
-LOGO_PATH = "logo.png"
-PROFILE_PATH = "profil.png"
-PROFIT_PATH = "profit.png"
 
 # Словарь для хранения пользователей, ожидающих ввода имени
 waiting_for_name = {}
@@ -836,22 +830,15 @@ async def start_handler(update, context):
         # Пользователь уже зарегистрирован
         user_states[telegram_id] = 'main_menu'
         keyboard = get_main_menu_keyboard(telegram_id)
-        await send_image_with_text(
-            update, context, LOGO_PATH,
-            "Добро пожаловать обратно!",
-            "<b>Добро пожаловать обратно!</b>\n\nВыберите действие из меню ниже."
-        )
-        # Отправить главное меню отдельно
         await update.message.reply_text(
-            "Главное меню:",
+            "Добро пожаловать обратно!",
             reply_markup=keyboard
         )
     else:
         # Новый пользователь - запросить имя
-        await send_image_with_text(
-            update, context, LOGO_PATH,
+        await update.message.reply_text(
             "Добро пожаловать! Введите ваше имя для регистрации.",
-            "<b>Добро пожаловать!</b>\n\nВведите ваше имя для регистрации."
+            reply_markup=ReplyKeyboardRemove()
         )
         # Добавить пользователя в список ожидающих ввода имени
         waiting_for_name[telegram_id] = True
@@ -880,11 +867,7 @@ async def help_handler(update, context):
 /start - перезапуск бота
 /help - эта справка"""
     
-    await send_image_with_text(
-        update, context, LOGO_PATH,
-        message,
-        "<b>Справка по использованию бота</b>\n\n" + message
-    )
+    await update.message.reply_text(message)
 
 
 def format_period_name(period):
@@ -896,36 +879,6 @@ def format_period_name(period):
         'all': 'все время'
     }
     return periods.get(period, period)
-
-
-async def send_image_with_text(update, context, image_path, text, caption=None):
-    """
-    Отправить изображение с текстом в одном сообщении
-    
-    Args:
-        update: Update объект
-        context: Context объект
-        image_path: Путь к изображению
-        text: Текст сообщения
-        caption: Подпись к изображению (опционально)
-    """
-    if os.path.exists(image_path):
-        try:
-            await update.message.reply_photo(
-                photo=open(image_path, 'rb'),
-                caption=caption or text,
-                parse_mode='HTML'
-            )
-            # Если текст не совпадает с подписью, отправим его отдельно
-            if caption and caption != text:
-                await update.message.reply_text(text)
-        except Exception as e:
-            logger.error(f"Ошибка при отправке изображения {image_path}: {e}")
-            # Если не удалось отправить изображение, отправим только текст
-            await update.message.reply_text(text)
-    else:
-        # Если изображение не найдено, отправим только текст
-        await update.message.reply_text(text)
 
 
 async def text_handler(update, context):
@@ -1003,11 +956,7 @@ async def text_handler(update, context):
                         message += f"{direction}: ${amount:.2f}\n"
                 message += f"\nВсего: ${stats['total']:.2f}"
             
-            await send_image_with_text(
-                update, context, PROFILE_PATH,
-                message,
-                f"<b>📊 Статистика за {period_name}</b>\n\n" + message
-            )
+            await update.message.reply_text(message)
         
         elif role in ['team_leader', 'admin']:
             # Статистика команды для тимлидера
@@ -1027,11 +976,7 @@ async def text_handler(update, context):
                 for name, amount in team_stats:
                     message += f"{name}: ${amount:.2f}\n"
             
-            await send_image_with_text(
-                update, context, PROFILE_PATH,
-                message,
-                f"<b>👥 Статистика команды за {period_name}</b>\n\n" + message
-            )
+            await update.message.reply_text(message)
         
         return
     
@@ -1056,11 +1001,7 @@ async def text_handler(update, context):
                     total_sum += amount
                 message += f"Всего: ${total_sum:.2f}"
             
-            await send_image_with_text(
-                update, context, PROFILE_PATH,
-                message,
-                f"<b>🛠 Детализация по направлениям за {period_name}</b>\n\n" + message
-            )
+            await update.message.reply_text(message)
         
         return
     
@@ -1129,11 +1070,7 @@ async def text_handler(update, context):
             # Вернуться в меню статистики
             user_states[telegram_id] = 'stats_menu'
             keyboard = get_stats_menu_keyboard(telegram_id)
-            await send_image_with_text(
-                update, context, PROFILE_PATH,
-                message,
-                f"<b>👤 Детализация по воркеру {worker_name} за {period_name}</b>\n\n" + message
-            )
+            await update.message.reply_text(message, reply_markup=keyboard)
         else:
             await update.message.reply_text("Воркер не найден.")
         return
@@ -1159,11 +1096,7 @@ async def text_handler(update, context):
             for name, amount in team_stats:
                 message += f"{name}: ${amount:.2f}\n"
         
-        await send_image_with_text(
-            update, context, PROFILE_PATH,
-            message,
-            f"<b>👥 Статистика команды за {period_name}</b>\n\n" + message
-        )
+        await update.message.reply_text(message)
         return
     
     # Обработка кнопки "🔄 Обновить"
@@ -1185,11 +1118,7 @@ async def text_handler(update, context):
                         message += f"{direction}: ${amount:.2f}\n"
                 message += f"\nВсего: ${stats['total']:.2f}"
             
-            await send_image_with_text(
-                update, context, PROFILE_PATH,
-                message,
-                f"<b>🔄 Обновление статистики за {period_name}</b>\n\n" + message
-            )
+            await update.message.reply_text(message)
         
         elif role in ['team_leader', 'admin']:
             team_id = get_user_team_id(telegram_id)
@@ -1207,11 +1136,7 @@ async def text_handler(update, context):
                 for name, amount in team_stats:
                     message += f"{name}: ${amount:.2f}\n"
             
-            await send_image_with_text(
-                update, context, PROFILE_PATH,
-                message,
-                f"<b>🔄 Обновление статистики команды за {period_name}</b>\n\n" + message
-            )
+            await update.message.reply_text(message)
         
         return
     
@@ -1241,11 +1166,7 @@ async def text_handler(update, context):
             for i, (name, total) in enumerate(rating, 1):
                 message += f"{i}. {name}: ${total:.2f}\n"
         
-        await send_image_with_text(
-            update, context, PROFILE_PATH,
-            message,
-            f"<b>🏆 Рейтинг воркеров за {period_name}</b>\n\n" + message
-        )
+        await update.message.reply_text(message)
         return
     
     # Обработка кнопки "👥 Команды" в меню рейтинга
@@ -1264,11 +1185,7 @@ async def text_handler(update, context):
             for i, (team_name, total) in enumerate(rating, 1):
                 message += f"{i}. {team_name}: ${total:.2f}\n"
         
-        await send_image_with_text(
-            update, context, PROFILE_PATH,
-            message,
-            f"<b>🏆 Рейтинг команд за {period_name}</b>\n\n" + message
-        )
+        await update.message.reply_text(message)
         return
     
     # Обработка кнопок периода в меню рейтинга
@@ -1285,8 +1202,6 @@ async def text_handler(update, context):
         
         # Получить тип рейтинга
         rtype = rating_type.get(telegram_id, 'workers')
-        
-        message = "Неизвестная ошибка"
         
         if rtype == 'workers':
             rating = get_workers_rating_by_period(period)
@@ -1308,11 +1223,7 @@ async def text_handler(update, context):
                 for i, (team_name, total) in enumerate(rating, 1):
                     message += f"{i}. {team_name}: ${total:.2f}\n"
         
-        await send_image_with_text(
-            update, context, PROFILE_PATH,
-            message,
-            f"<b>🏆 Рейтинг за {period_name}</b>\n\n" + message
-        )
+        await update.message.reply_text(message)
         return
     
     # Обработка кнопки "🤖 Боты"
